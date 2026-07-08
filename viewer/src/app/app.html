@@ -1,0 +1,345 @@
+<div class="mx-auto max-w-6xl p-6 text-sm text-slate-900">
+  <h1 class="text-2xl font-bold">Mineral Rights Activity Tracker — Raw Data Preview</h1>
+  <p class="mt-1 text-slate-500">
+    The two things that matter most: <strong>current wells</strong> and
+    <strong>applications to drill</strong>, filterable by state/county and date range.
+  </p>
+
+  <!-- ============ TABS ============ -->
+  <div class="mt-6 flex gap-2 border-b border-slate-200">
+    <button
+      class="rounded-t-lg px-4 py-2 font-medium"
+      [class.bg-slate-900]="activeTab() === 'ok'"
+      [class.text-white]="activeTab() === 'ok'"
+      [class.text-slate-500]="activeTab() !== 'ok'"
+      (click)="activeTab.set('ok')"
+    >
+      Oklahoma (live API)
+    </button>
+    <button
+      class="rounded-t-lg px-4 py-2 font-medium"
+      [class.bg-slate-900]="activeTab() === 'tx'"
+      [class.text-white]="activeTab() === 'tx'"
+      [class.text-slate-500]="activeTab() !== 'tx'"
+      (click)="activeTab.set('tx')"
+    >
+      Texas (bulk file sample)
+    </button>
+  </div>
+
+  <!-- ============ OKLAHOMA TAB ============ -->
+  @if (activeTab() === 'ok') {
+    <div class="mt-4 rounded-lg border border-slate-200 p-5">
+      <p class="text-slate-600">
+        Both tables below query the real OCC ArcGIS REST API live, from your browser, using the
+        same county + date range filters.
+      </p>
+
+      <div class="mt-4 flex flex-wrap items-end gap-4 rounded-lg bg-slate-50 p-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">County contains</span>
+          <input type="text" class="rounded border border-slate-300 px-2 py-1" [(ngModel)]="okCounty" placeholder="e.g. GRADY" (keydown.enter)="searchOk()" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Date after</span>
+          <input type="date" class="rounded border border-slate-300 px-2 py-1" [(ngModel)]="okStart" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Date before</span>
+          <input type="date" class="rounded border border-slate-300 px-2 py-1" [(ngModel)]="okEnd" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Record count (each)</span>
+          <input type="number" class="w-28 rounded border border-slate-300 px-2 py-1" [(ngModel)]="okCount" min="1" max="500" />
+        </label>
+        <button class="rounded bg-slate-900 px-4 py-1.5 font-medium text-white hover:bg-slate-700" (click)="searchOk()">
+          Search Oklahoma
+        </button>
+        <span class="text-xs text-slate-400">
+          "Date" means well-completion date for wells, submit date for applications.
+        </span>
+      </div>
+
+      <!-- OK current wells -->
+      <h2 class="mt-6 text-lg font-semibold">Current Wells</h2>
+      <p class="text-xs text-slate-500">
+        Source: <code class="rounded bg-slate-100 px-1 py-0.5">COMP_WELLS</code> (OCC well completion reports)
+      </p>
+      <div class="mt-2 flex items-center gap-3">
+        <button class="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50" (click)="okWellShowRaw.set(!okWellShowRaw())">
+          {{ okWellShowRaw() ? 'Hide' : 'Show' }} raw JSON
+        </button>
+        @if (okWellLoading()) { <span class="text-slate-500">Loading…</span> }
+      </div>
+      <p class="mt-2 truncate font-mono text-xs text-slate-400">GET {{ okWellQueryUrl() }}</p>
+      @if (okWellError()) { <p class="mt-2 text-red-600">{{ okWellError() }}</p> }
+
+      @if (okWellFeatures().length > 0) {
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="border-b border-slate-300 text-xs uppercase text-slate-500">
+                <th class="py-1.5 pr-3">API #</th>
+                <th class="py-1.5 pr-3">Well Name</th>
+                <th class="py-1.5 pr-3">Operator</th>
+                <th class="py-1.5 pr-3">Status</th>
+                <th class="py-1.5 pr-3">Type</th>
+                <th class="py-1.5 pr-3">County</th>
+                <th class="py-1.5 pr-3">Spud</th>
+                <th class="py-1.5 pr-3">Completed</th>
+                <th class="py-1.5 pr-3">Depth</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of okWellFeatures(); track f.attributes.objectid) {
+                <tr class="border-b border-slate-100">
+                  <td class="py-1.5 pr-3">{{ f.attributes.api_number }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.well_name }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.operator_name }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.well_status }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.well_type }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.county }}</td>
+                  <td class="py-1.5 pr-3">{{ epochToDate(f.attributes.spud) }}</td>
+                  <td class="py-1.5 pr-3">{{ epochToDate(f.attributes.well_completion) }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.total_depth }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (!okWellLoading()) {
+        <p class="mt-3 text-slate-400">No results for this filter.</p>
+      }
+      @if (okWellShowRaw()) {
+        <pre class="mt-4 max-h-96 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{{ okWellRaw() | json }}</pre>
+      }
+
+      <!-- OK applications to drill -->
+      <h2 class="mt-8 text-lg font-semibold">Applications to Drill</h2>
+      <p class="text-xs text-slate-500">
+        Source: <code class="rounded bg-slate-100 px-1 py-0.5">ITD_WELLS</code> ("Intent To Drill")
+      </p>
+      <div class="mt-2 flex items-center gap-3">
+        <button class="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50" (click)="okPermitShowRaw.set(!okPermitShowRaw())">
+          {{ okPermitShowRaw() ? 'Hide' : 'Show' }} raw JSON
+        </button>
+        @if (okPermitLoading()) { <span class="text-slate-500">Loading…</span> }
+      </div>
+      <p class="mt-2 truncate font-mono text-xs text-slate-400">GET {{ okPermitQueryUrl() }}</p>
+      @if (okPermitError()) { <p class="mt-2 text-red-600">{{ okPermitError() }}</p> }
+
+      @if (okPermitFeatures().length > 0) {
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="border-b border-slate-300 text-xs uppercase text-slate-500">
+                <th class="py-1.5 pr-3">API #</th>
+                <th class="py-1.5 pr-3">Well Name</th>
+                <th class="py-1.5 pr-3">Well #</th>
+                <th class="py-1.5 pr-3">Operator</th>
+                <th class="py-1.5 pr-3">Type</th>
+                <th class="py-1.5 pr-3">Status</th>
+                <th class="py-1.5 pr-3">County</th>
+                <th class="py-1.5 pr-3">Submitted</th>
+                <th class="py-1.5 pr-3">Approved</th>
+                <th class="py-1.5 pr-3">Expires</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of okPermitFeatures(); track f.attributes.objectid) {
+                <tr class="border-b border-slate-100">
+                  <td class="py-1.5 pr-3">{{ f.attributes.api_number }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.well_name }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.well_number }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.entity_name }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.application_type }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.permit_status }}</td>
+                  <td class="py-1.5 pr-3">{{ f.attributes.county }}</td>
+                  <td class="py-1.5 pr-3">{{ epochToDate(f.attributes.submit_date) }}</td>
+                  <td class="py-1.5 pr-3">{{ epochToDate(f.attributes.approval_date) }}</td>
+                  <td class="py-1.5 pr-3">{{ epochToDate(f.attributes.expire_date) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (!okPermitLoading()) {
+        <p class="mt-3 text-slate-400">No results for this filter.</p>
+      }
+      @if (okPermitShowRaw()) {
+        <pre class="mt-4 max-h-96 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{{ okPermitRaw() | json }}</pre>
+      }
+    </div>
+  }
+
+  <!-- ============ TEXAS TAB ============ -->
+  @if (activeTab() === 'tx') {
+    <div class="mt-4 rounded-lg border border-slate-200 p-5">
+      <p class="text-slate-600">
+        RRC has no REST API — both tables below are a static sample pulled once through RRC's
+        sanctioned bulk-download portal. The filters here run client-side against that sample,
+        not a live query (see notes at the bottom for what a real ingestion job needs to do
+        differently).
+      </p>
+
+      <div class="mt-4 flex flex-wrap items-end gap-4 rounded-lg bg-slate-50 p-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">County (name or code)</span>
+          <input type="text" class="rounded border border-slate-300 px-2 py-1" [(ngModel)]="txCounty" placeholder="e.g. ANDREWS" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Date after</span>
+          <input type="date" class="rounded border border-slate-300 px-2 py-1" [(ngModel)]="txStart" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Date before</span>
+          <input type="date" class="rounded border border-slate-300 px-2 py-1" [(ngModel)]="txEnd" />
+        </label>
+        <span class="text-xs text-slate-400">
+          Filters apply live. "Date" means permit-issued date for applications, completion date
+          for wells.
+        </span>
+      </div>
+
+      <!-- TX current wells -->
+      <h2 class="mt-6 text-lg font-semibold">
+        Current Wells <span class="text-sm font-normal text-slate-400">({{ filteredTxWells().length }} of {{ txWellData()?.count ?? 0 }} sampled)</span>
+      </h2>
+      <p class="text-xs text-slate-500">
+        Source: RRC Wellbore Query Data (450+ MB CSV, updated monthly — only a small byte-range
+        sample was pulled, from a 2020 snapshot, so ignore how old the dates look)
+      </p>
+      @if (txWellLoading()) { <p class="mt-2 text-slate-500">Loading…</p> }
+      @if (txWellError()) { <p class="mt-2 text-red-600">{{ txWellError() }}</p> }
+
+      @if (txWellData()) {
+        <button class="mt-2 rounded border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50" (click)="txWellShowRaw.set(!txWellShowRaw())">
+          {{ txWellShowRaw() ? 'Hide' : 'Show' }} raw JSON
+        </button>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="border-b border-slate-300 text-xs uppercase text-slate-500">
+                <th class="py-1.5 pr-3">API #</th>
+                <th class="py-1.5 pr-3">County</th>
+                <th class="py-1.5 pr-3">Lease Name</th>
+                <th class="py-1.5 pr-3">Well #</th>
+                <th class="py-1.5 pr-3">Operator</th>
+                <th class="py-1.5 pr-3">O/G</th>
+                <th class="py-1.5 pr-3">Status</th>
+                <th class="py-1.5 pr-3">Depth</th>
+                <th class="py-1.5 pr-3">Completion Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (w of filteredTxWells(); track w.standard_api_number) {
+                <tr class="border-b border-slate-100">
+                  <td class="py-1.5 pr-3">{{ w.standard_api_number }}</td>
+                  <td class="py-1.5 pr-3">{{ w.county_name }}</td>
+                  <td class="py-1.5 pr-3">{{ w.lease_name }}</td>
+                  <td class="py-1.5 pr-3">{{ w.well_no_display }}</td>
+                  <td class="py-1.5 pr-3">{{ w.operator_name }}</td>
+                  <td class="py-1.5 pr-3">{{ w.oil_gas_code }}</td>
+                  <td class="py-1.5 pr-3">{{ w.well_status }}</td>
+                  <td class="py-1.5 pr-3">{{ w.api_depth }}</td>
+                  <td class="py-1.5 pr-3">{{ w.completion_date }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (filteredTxWells().length === 0) {
+            <p class="mt-3 text-slate-400">No results for this filter in the sample.</p>
+          }
+        </div>
+        @if (txWellShowRaw()) {
+          <pre class="mt-4 max-h-96 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{{ filteredTxWells() | json }}</pre>
+        }
+      }
+
+      <!-- TX applications to drill -->
+      <h2 class="mt-8 text-lg font-semibold">
+        Applications to Drill <span class="text-sm font-normal text-slate-400">({{ filteredTxPermits().length }} of {{ txPermitData()?.counts?.['02_permit'] ?? 0 }} sampled)</span>
+      </h2>
+      <p class="text-xs text-slate-500">
+        Source: RRC Drilling Permit Master (<code class="rounded bg-slate-100 px-1 py-0.5">daf420.dat</code>, ~500 KB, daily)
+      </p>
+      @if (txPermitLoading()) { <p class="mt-2 text-slate-500">Loading…</p> }
+      @if (txPermitError()) { <p class="mt-2 text-red-600">{{ txPermitError() }}</p> }
+
+      @if (txPermitData()) {
+        <button class="mt-2 rounded border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50" (click)="txPermitShowRaw.set(!txPermitShowRaw())">
+          {{ txPermitShowRaw() ? 'Hide' : 'Show' }} raw JSON
+        </button>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="border-b border-slate-300 text-xs uppercase text-slate-500">
+                <th class="py-1.5 pr-3">Permit #</th>
+                <th class="py-1.5 pr-3">API #</th>
+                <th class="py-1.5 pr-3">Lease Name</th>
+                <th class="py-1.5 pr-3">Well #</th>
+                <th class="py-1.5 pr-3">County</th>
+                <th class="py-1.5 pr-3">Nearest City</th>
+                <th class="py-1.5 pr-3">Type</th>
+                <th class="py-1.5 pr-3">Depth (ft)</th>
+                <th class="py-1.5 pr-3">Horizontal?</th>
+                <th class="py-1.5 pr-3">Issued</th>
+                <th class="py-1.5 pr-3">Spud</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of filteredTxPermits(); track p.permit_number) {
+                <tr class="border-b border-slate-100">
+                  <td class="py-1.5 pr-3">{{ p.permit_number }}</td>
+                  <td class="py-1.5 pr-3">{{ p.api_number }}</td>
+                  <td class="py-1.5 pr-3">{{ p.lease_name }}</td>
+                  <td class="py-1.5 pr-3">{{ p.well_number }}</td>
+                  <td class="py-1.5 pr-3">{{ tx_county_code_to_name[p.county_code] ?? p.county_code }}</td>
+                  <td class="py-1.5 pr-3">{{ p.nearest_city }}</td>
+                  <td class="py-1.5 pr-3">{{ p.application_type }}</td>
+                  <td class="py-1.5 pr-3">{{ p.total_depth_ft }}</td>
+                  <td class="py-1.5 pr-3">{{ p.horizontal_well ? 'Y' : 'N' }}</td>
+                  <td class="py-1.5 pr-3">{{ p.permit_issued_date }}</td>
+                  <td class="py-1.5 pr-3">{{ p.spud_date ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (filteredTxPermits().length === 0) {
+            <p class="mt-3 text-slate-400">No results for this filter in the sample.</p>
+          }
+        </div>
+        @if (txPermitShowRaw()) {
+          <pre class="mt-4 max-h-96 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{{ filteredTxPermits() | json }}</pre>
+        }
+      }
+    </div>
+  }
+
+  <section class="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-5">
+    <h2 class="text-lg font-semibold">Notes / open questions</h2>
+    <ul class="mt-2 list-disc space-y-2 pl-5 text-slate-700">
+      <li>
+        <strong>Oklahoma filters are live</strong> — every search re-queries OCC's real API.
+        <strong>Texas filters are client-side</strong> against a small pre-fetched sample — the
+        real ingestion job will need scheduled bulk downloads plus a proper indexed database to
+        support this kind of filtering server-side once it's not just a preview.
+      </li>
+      <li>
+        OCC's <code class="rounded bg-white px-1 py-0.5">COMP_WELLS</code> table is completion
+        reports, not every well ever permitted — a well with a permit but no completion filed
+        yet won't show up there (it'll be in ITD_WELLS as an application instead). Worth
+        confirming with OCC docs whether there's a gap between "permit approved" and "completion
+        filed" where a spudded, actively-drilling well is invisible to both layers.
+      </li>
+      <li>
+        County identifiers are inconsistent across and even within sources (OCC wells:
+        <code class="rounded bg-white px-1 py-0.5">"GRADY"</code>; OCC permits: same; TX permits:
+        numeric code only, e.g. <code class="rounded bg-white px-1 py-0.5">"003"</code>; TX
+        wells: plain name). This viewer maps TX's numeric codes to names using RRC's own
+        published table so both TX tables can share one county filter — confirms the spec's plan
+        to standardize on FIPS codes in the normalization layer rather than trusting raw strings.
+      </li>
+    </ul>
+  </section>
+</div>

@@ -1,0 +1,11 @@
+# Node (root-level Angular CLI install used only to scaffold the viewer)
+/node_modules
+npm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+
+# System files
+.DS_Store
+Thumbs.db
