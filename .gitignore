@@ -1,6 +1,10 @@
 # Python
 __pycache__/
 *.pyc
+ingestion/.venv/
+
+# Secrets (ingestion job DB connection string, etc.)
+ingestion/.env
 
 # System files
 .DS_Store

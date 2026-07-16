@@ -42,6 +42,8 @@ export type Database = {
       activity: {
         Row: {
           api_number: string | null
+          bhl_latitude: number | null
+          bhl_longitude: number | null
           county: string
           county_fips: string | null
           created_at: string
@@ -51,6 +53,7 @@ export type Database = {
           location: unknown
           longitude: number | null
           operator: string | null
+          path: unknown
           record_type: Database["public"]["Enums"]["activity_record_type"]
           source_id: string
           source_state_agency: string
@@ -62,6 +65,8 @@ export type Database = {
         }
         Insert: {
           api_number?: string | null
+          bhl_latitude?: number | null
+          bhl_longitude?: number | null
           county: string
           county_fips?: string | null
           created_at?: string
@@ -71,6 +76,7 @@ export type Database = {
           location?: unknown
           longitude?: number | null
           operator?: string | null
+          path?: unknown
           record_type: Database["public"]["Enums"]["activity_record_type"]
           source_id: string
           source_state_agency: string
@@ -82,6 +88,8 @@ export type Database = {
         }
         Update: {
           api_number?: string | null
+          bhl_latitude?: number | null
+          bhl_longitude?: number | null
           county?: string
           county_fips?: string | null
           created_at?: string
@@ -91,6 +99,7 @@ export type Database = {
           location?: unknown
           longitude?: number | null
           operator?: string | null
+          path?: unknown
           record_type?: Database["public"]["Enums"]["activity_record_type"]
           source_id?: string
           source_state_agency?: string
@@ -177,6 +186,90 @@ export type Database = {
           stripe_subscription_id?: string | null
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      raw_ok_laterals: {
+        Row: {
+          api: string | null
+          bhl_latitude: number | null
+          bhl_longitude: number | null
+          county: string | null
+          end_date: string | null
+          flow_date: string | null
+          formation: string | null
+          ingested_at: string
+          meridian: string | null
+          oid: number
+          operator_name: string | null
+          operator_number: string | null
+          path: unknown
+          raw: Json
+          rng: string | null
+          section: number | null
+          service_company: string | null
+          shl_latitude: number | null
+          shl_longitude: number | null
+          source_datum: string | null
+          stages: number | null
+          start_date: string | null
+          submitted_date: string | null
+          township: string | null
+          well_name: string | null
+        }
+        Insert: {
+          api?: string | null
+          bhl_latitude?: number | null
+          bhl_longitude?: number | null
+          county?: string | null
+          end_date?: string | null
+          flow_date?: string | null
+          formation?: string | null
+          ingested_at?: string
+          meridian?: string | null
+          oid: number
+          operator_name?: string | null
+          operator_number?: string | null
+          path?: unknown
+          raw: Json
+          rng?: string | null
+          section?: number | null
+          service_company?: string | null
+          shl_latitude?: number | null
+          shl_longitude?: number | null
+          source_datum?: string | null
+          stages?: number | null
+          start_date?: string | null
+          submitted_date?: string | null
+          township?: string | null
+          well_name?: string | null
+        }
+        Update: {
+          api?: string | null
+          bhl_latitude?: number | null
+          bhl_longitude?: number | null
+          county?: string | null
+          end_date?: string | null
+          flow_date?: string | null
+          formation?: string | null
+          ingested_at?: string
+          meridian?: string | null
+          oid?: number
+          operator_name?: string | null
+          operator_number?: string | null
+          path?: unknown
+          raw?: Json
+          rng?: string | null
+          section?: number | null
+          service_company?: string | null
+          shl_latitude?: number | null
+          shl_longitude?: number | null
+          source_datum?: string | null
+          stages?: number | null
+          start_date?: string | null
+          submitted_date?: string | null
+          township?: string | null
+          well_name?: string | null
         }
         Relationships: []
       }

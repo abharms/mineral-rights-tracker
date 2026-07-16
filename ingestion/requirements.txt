@@ -1,0 +1,4 @@
+# Ingestion job dependencies.
+# Fetching (ArcGIS REST) uses the Python standard library only.
+# psycopg is needed only for the DB load/normalize step (writing to Supabase).
+psycopg[binary]>=3.2
