@@ -92,6 +92,11 @@ const ACTIVITY: ActivityEvent[] = [
 
 // ---- Accessors (swap these for Supabase queries when wiring real data) ---- //
 
+/** Both the tract "active/quiet" status and the "Records found" stat claim a
+ * 30-day recency window in their copy — this constant is what actually
+ * enforces it, so the two can't silently drift apart again. */
+const RECENT_ACTIVITY_WINDOW_DAYS = 30;
+
 export interface TractSummary extends Tract {
   displayLabel: string;
   level: ActivityLevel;
@@ -101,7 +106,9 @@ export interface TractSummary extends Tract {
 
 export function getTractSummaries(): TractSummary[] {
   return TRACTS.map((t) => {
-    const events = ACTIVITY.filter((a) => a.tractId === t.id).sort((a, b) => a.daysAgo - b.daysAgo);
+    const events = ACTIVITY.filter(
+      (a) => a.tractId === t.id && a.daysAgo <= RECENT_ACTIVITY_WINDOW_DAYS,
+    ).sort((a, b) => a.daysAgo - b.daysAgo);
     return {
       ...t,
       displayLabel: getTractDisplayLabel(t),
@@ -115,8 +122,9 @@ export function getTractSummaries(): TractSummary[] {
 export function getDashboardStats() {
   const tracts = TRACTS.length;
   const acres = TRACTS.reduce((sum, t) => sum + t.approxAcres, 0);
-  const newActivity = ACTIVITY.length;
-  const activeCounties = new Set(ACTIVITY.map((a) => a.county)).size;
+  const recent = ACTIVITY.filter((a) => a.daysAgo <= RECENT_ACTIVITY_WINDOW_DAYS);
+  const newActivity = recent.length;
+  const activeCounties = new Set(recent.map((a) => a.county)).size;
   return { tracts, acres, newActivity, activeCounties };
 }
 

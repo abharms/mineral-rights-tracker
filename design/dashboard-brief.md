@@ -42,6 +42,14 @@ Each tract also has an activity status:
 A list of the most recent activity events across all the user's tracts, newest first (not
 grouped by tract). Each row uses the same activity event fields below.
 
+### 5. Plan / monitoring status
+The user's subscription tier is **account-wide, not per-tract** — a user is either on the base
+tier (look up activity yourself) or the monitored tier (we watch and alert you), and that status
+applies to their whole account, not individually per tract. This should be shown once (e.g. a
+"Your Plan" panel), not repeated on every tract card. Data available: current plan name, a short
+description of what it includes, and — if not on the monitored tier — what upgrading adds
+(automatic monitoring, instant alerts, summary reports).
+
 ## Activity event — full field list
 
 Each activity event (a well or a permit) has:

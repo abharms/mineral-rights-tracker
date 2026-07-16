@@ -16,9 +16,21 @@ const PATHS: Record<string, string> = {
 };
 
 const FALLBACK_PATH = "M10,10 L90,10 L90,90 L10,90 Z";
+const SUPPORTED_STATES = new Set(Object.keys(PATHS));
 
 export function StateOutline({ state, className }: { state: string; className?: string }) {
-  const d = PATHS[state.toUpperCase()] ?? FALLBACK_PATH;
+  const code = state.toUpperCase();
+  if (process.env.NODE_ENV !== "production" && !SUPPORTED_STATES.has(code)) {
+    // Falls back to a plain square below — this warns so a newly-ingested
+    // state doesn't silently ship without real icon artwork. Add it to
+    // STATE_CODES in scripts/generate-state-outlines.mjs and re-run
+    // `npm run generate:states`.
+    console.warn(
+      `StateOutline: no icon for state "${state}" — rendering a generic fallback. ` +
+        "Add it to STATE_CODES in scripts/generate-state-outlines.mjs and regenerate.",
+    );
+  }
+  const d = PATHS[code] ?? FALLBACK_PATH;
   return (
     <svg viewBox={VIEW_BOX} className={className} fill="none" aria-hidden>
       <path d={d} stroke="currentColor" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />

@@ -8,7 +8,7 @@ const LateralsMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-screen items-center justify-center text-muted-foreground">
+      <div className="flex h-full items-center justify-center text-muted-foreground">
         Loading map…
       </div>
     ),

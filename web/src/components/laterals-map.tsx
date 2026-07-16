@@ -24,9 +24,12 @@ const MAX_FEATURES = 6000;
 
 const EMPTY: FeatureCollection = { type: "FeatureCollection", features: [] };
 
-// Brand orange (--brand in globals.css) — MapLibre paint expressions need a
-// literal, so this is kept in sync with the CSS token by hand.
-const BRAND_ORANGE = "#d97a3a";
+// Brand orange (--brand in globals.css, light mode: oklch(0.7 0.17 48)).
+// MapLibre paint expressions need a literal color, not a CSS custom property,
+// so this constant must be hand-updated if --brand's light-mode value changes.
+// (The legend swatch below is plain DOM/CSS, so it reads var(--brand) directly
+// instead of duplicating this — no drift risk there.)
+const BRAND_ORANGE = "#f0772d";
 
 const lateralLayer: LayerProps = {
   id: "laterals-line",
@@ -156,7 +159,7 @@ export function LateralsMap() {
       <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-border bg-card/95 px-4 py-3 text-sm shadow-md backdrop-blur">
         <div className="font-heading font-semibold text-foreground">Oklahoma activity</div>
         <div className="mt-1.5 flex items-center gap-2 text-muted-foreground">
-          <span className="inline-block h-0.5 w-6 rounded-full" style={{ background: BRAND_ORANGE }} />
+          <span className="inline-block h-0.5 w-6 rounded-full" style={{ background: "var(--brand)" }} />
           <span>surface → bottom-hole trace</span>
         </div>
         <div className="mt-1 text-muted-foreground">

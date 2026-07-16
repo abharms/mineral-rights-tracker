@@ -15,7 +15,7 @@ and (2) an "add another tract" action for an existing user who already has some.
 | Field | Required? | Notes |
 |---|---|---|
 | Label / nickname | Optional | Free text (e.g. "Home Place," "Grandma's"). If left blank, the app displays a computed name instead, like "Garvin County Tract" — so this field should be presented as optional/nice-to-have, never as something the user must fill in to proceed |
-| State | Required | MVP only supports Oklahoma and Texas — the field should not allow other states yet |
+| State | Required | MVP only supports Oklahoma and Texas — the field should not allow other states yet. (Dashboard mock data includes a New Mexico tract purely to exercise the state-icon component visually — that is not a scope change; the real onboarding state selector should still be OK/TX only.) |
 | County | Required | Depends on the state selected |
 | Approximate acres | Optional | Numeric |
 | Interest type | Required | One of: Mineral, Royalty, or NPRI (non-participating royalty interest) — default/most common is Mineral |

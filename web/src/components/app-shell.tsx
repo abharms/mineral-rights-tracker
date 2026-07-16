@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -87,6 +87,15 @@ function NavGroup({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(!!defaultOpen);
+
+  // The (app) layout persists across client-side navigation, so this component
+  // isn't remounted when the route changes — auto-expand when a child route
+  // becomes active so the active link is never left hidden inside a collapsed
+  // group. Never auto-collapses, so a manual toggle is still respected.
+  useEffect(() => {
+    if (defaultOpen) setOpen(true);
+  }, [defaultOpen]);
+
   return (
     <div>
       <button
