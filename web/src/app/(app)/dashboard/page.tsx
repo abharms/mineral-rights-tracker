@@ -17,12 +17,37 @@ import {
   ShieldCheck,
   Lock,
   ArrowRight,
+  MapPin,
 } from "lucide-react";
 
 function formatDaysAgo(days: number) {
   if (days === 0) return "Today";
   if (days === 1) return "Yesterday";
   return `${days} days ago`;
+}
+
+// Decorative per-tract accent color (cycled by index) — purely visual variety,
+// not tied to status or real parcel geometry. See design/dashboard-brief.md:
+// we deliberately avoid implying precise boundaries we don't have.
+const TRACT_ACCENTS = [
+  { fg: "text-orange-600", bg: "bg-orange-50", ring: "ring-orange-200" },
+  { fg: "text-emerald-600", bg: "bg-emerald-50", ring: "ring-emerald-200" },
+  { fg: "text-violet-600", bg: "bg-violet-50", ring: "ring-violet-200" },
+  { fg: "text-blue-600", bg: "bg-blue-50", ring: "ring-blue-200" },
+];
+
+function StatusIndicator({ active, label }: { active: boolean; label: string }) {
+  return (
+    <span
+      className={
+        "inline-flex items-center gap-1.5 text-sm font-medium " +
+        (active ? "text-brand" : "text-muted-foreground")
+      }
+    >
+      <span className={"size-1.5 rounded-full " + (active ? "bg-brand" : "bg-muted-foreground/50")} />
+      {label}
+    </span>
+  );
 }
 
 function StatTile({ label, value, sublabel }: { label: string; value: string | number; sublabel?: string }) {
@@ -65,57 +90,62 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3">
-            {tracts.map((tract) => (
-              <Card key={tract.id} className="overflow-hidden py-0">
+          <div className="mt-4 flex flex-col gap-4">
+            {tracts.map((tract, i) => {
+              const accent = TRACT_ACCENTS[i % TRACT_ACCENTS.length];
+              return (
+              <Card key={tract.id} className="overflow-hidden border-border py-0 shadow-sm">
                 <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-                  <div className="min-w-0 sm:w-56 sm:shrink-0">
-                    <div className="font-heading text-base font-semibold text-foreground">
-                      {tract.displayLabel}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {tract.county} County, {tract.state}
+                  <div className="flex min-w-0 items-center gap-3 sm:w-60 sm:shrink-0">
+                    <span
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${accent.bg} ring-1 ${accent.ring}`}
+                    >
+                      <MapPin className={`size-5 ${accent.fg}`} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-heading text-base font-semibold text-foreground">
+                        {tract.displayLabel}
+                      </div>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {tract.county} County, {tract.state}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-6 text-sm sm:w-52 sm:shrink-0">
+                  <div className="flex gap-6 text-sm sm:w-64 sm:shrink-0">
                     <div>
                       <div className="text-foreground">{tract.approxAcres.toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">Acres</div>
                     </div>
-                    <div className="capitalize">
-                      <div className="text-foreground">
+                    <div>
+                      <div className="text-foreground capitalize">
                         {tract.interestType === "npri" ? "NPRI" : tract.interestType}
                       </div>
                       <div className="text-xs text-muted-foreground">Interest</div>
                     </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-foreground">{tract.operator ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground">Operator</div>
+                    </div>
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    {tract.level === "active" ? (
-                      <>
-                        <Badge className="bg-brand text-brand-foreground hover:bg-brand">
-                          Recent activity
-                        </Badge>
-                        {tract.latest && (
-                          <div className="mt-1.5 text-sm">
-                            <span className="font-medium text-foreground">
-                              {tract.latest.status}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {" "}
-                              · {formatDaysAgo(tract.latest.daysAgo)}
-                            </span>
-                          </div>
-                        )}
-                      </>
+                    <StatusIndicator
+                      active={tract.level === "active"}
+                      label={tract.level === "active" ? "Recent activity" : "Quiet"}
+                    />
+                    {tract.level === "active" && tract.latest ? (
+                      <div className="mt-1 text-sm">
+                        <span className="font-medium text-foreground">{tract.latest.status}</span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · {formatDaysAgo(tract.latest.daysAgo)}
+                        </span>
+                      </div>
                     ) : (
-                      <>
-                        <Badge variant="secondary">Quiet</Badge>
-                        <div className="mt-1.5 text-sm text-muted-foreground">
-                          No new activity in the last 30 days.
-                        </div>
-                      </>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        No new activity in the last 30 days.
+                      </div>
                     )}
                   </div>
 
@@ -132,7 +162,8 @@ export default function DashboardPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

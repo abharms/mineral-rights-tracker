@@ -56,7 +56,7 @@
  * sparingly for CTAs / activity highlights. Light-first; dark supported.
  */
 :root {
-  --background: oklch(0.985 0.004 95); /* warm off-white */
+  --background: oklch(0.965 0.004 260); /* cool light gray */
   --foreground: oklch(0.27 0.03 255); /* navy ink */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.27 0.03 255);
@@ -64,17 +64,17 @@
   --popover-foreground: oklch(0.27 0.03 255);
   --primary: oklch(0.34 0.06 256); /* deep navy */
   --primary-foreground: oklch(0.99 0.004 95);
-  --secondary: oklch(0.955 0.006 95);
+  --secondary: oklch(0.955 0.006 260);
   --secondary-foreground: oklch(0.34 0.06 256);
-  --muted: oklch(0.965 0.005 95);
+  --muted: oklch(0.965 0.005 260);
   --muted-foreground: oklch(0.52 0.02 256);
-  --accent: oklch(0.955 0.02 70); /* faint warm tint for hovers */
+  --accent: oklch(0.955 0.01 260); /* faint neutral tint for hovers */
   --accent-foreground: oklch(0.34 0.06 256);
   --brand: oklch(0.7 0.17 48); /* MRC orange */
   --brand-foreground: oklch(0.99 0.004 95);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.006 95);
-  --input: oklch(0.9 0.006 95);
+  --border: oklch(0.87 0.008 260);
+  --input: oklch(0.87 0.008 260);
   --ring: oklch(0.34 0.06 256);
   --chart-1: oklch(0.7 0.17 48); /* orange */
   --chart-2: oklch(0.34 0.06 256); /* navy */
@@ -82,14 +82,16 @@
   --chart-4: oklch(0.75 0.1 60);
   --chart-5: oklch(0.45 0.05 256);
   --radius: 0.625rem;
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.27 0.03 255);
-  --sidebar-primary: oklch(0.34 0.06 256);
-  --sidebar-primary-foreground: oklch(0.99 0.004 95);
-  --sidebar-accent: oklch(0.955 0.006 95);
-  --sidebar-accent-foreground: oklch(0.34 0.06 256);
-  --sidebar-border: oklch(0.9 0.006 95);
-  --sidebar-ring: oklch(0.34 0.06 256);
+  /* Sidebar is a persistent dark navy panel regardless of light/dark mode
+     (matches the approved mockup — a dark nav rail against a light app). */
+  --sidebar: oklch(0.16 0.025 260);
+  --sidebar-foreground: oklch(0.93 0.008 260);
+  --sidebar-primary: oklch(0.42 0.12 258); /* active nav item — brighter blue to stand out */
+  --sidebar-primary-foreground: oklch(0.98 0.005 260);
+  --sidebar-accent: oklch(0.23 0.03 260); /* hover */
+  --sidebar-accent-foreground: oklch(0.98 0.005 260);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.42 0.12 258);
 }
 
 .dark {
