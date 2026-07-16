@@ -24,11 +24,15 @@ const MAX_FEATURES = 6000;
 
 const EMPTY: FeatureCollection = { type: "FeatureCollection", features: [] };
 
+// Brand orange (--brand in globals.css) — MapLibre paint expressions need a
+// literal, so this is kept in sync with the CSS token by hand.
+const BRAND_ORANGE = "#d97a3a";
+
 const lateralLayer: LayerProps = {
   id: "laterals-line",
   type: "line",
   paint: {
-    "line-color": "#c026d3",
+    "line-color": BRAND_ORANGE,
     "line-opacity": 0.85,
     // slightly thicker as you zoom in
     "line-width": ["interpolate", ["linear"], ["zoom"], 6, 1.2, 10, 2.5, 14, 4],
@@ -108,7 +112,7 @@ export function LateralsMap() {
   }, []);
 
   return (
-    <div className="relative h-screen w-screen">
+    <div className="relative h-[calc(100vh-4rem)] w-full">
       <Map
         ref={mapRef}
         initialViewState={{ longitude: -97.8, latitude: 35.6, zoom: 6.2 }}
@@ -149,10 +153,10 @@ export function LateralsMap() {
       </Map>
 
       {/* Overlay: legend + live count */}
-      <div className="pointer-events-none absolute left-4 top-4 rounded-lg bg-background/90 px-4 py-3 text-sm shadow-md backdrop-blur">
-        <div className="font-semibold">Oklahoma horizontal laterals</div>
-        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-          <span className="inline-block h-0.5 w-6" style={{ background: "#c026d3" }} />
+      <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-border bg-card/95 px-4 py-3 text-sm shadow-md backdrop-blur">
+        <div className="font-heading font-semibold text-foreground">Oklahoma activity</div>
+        <div className="mt-1.5 flex items-center gap-2 text-muted-foreground">
+          <span className="inline-block h-0.5 w-6 rounded-full" style={{ background: BRAND_ORANGE }} />
           <span>surface → bottom-hole trace</span>
         </div>
         <div className="mt-1 text-muted-foreground">
