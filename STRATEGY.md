@@ -100,14 +100,143 @@ record.
                → map + dashboard (Tier 1 = map/data; Tier 2 = personalized monitoring)
 ```
 
-**Reuse from current codebase:** `ingestion/tx_rrc_parse.py`,
-`ingestion/tx_rrc_parse_wellbore.py` (verified TX parsers); OK ArcGIS query logic in
-`viewer/src/app/app.ts` (`OCC_BASE`, `buildOkWhere`, `loadOkWells`, `loadOkPermits`);
-`viewer/src/app/tx-county-codes.ts` (county crosswalk). Keep Angular for the app.
+**Frontend framework decision: Next.js (React) — replacing the Angular spike.** Rationale:
+- Most-documented Supabase + Stripe SaaS path → most reliable AI-assisted build (we lean on
+  Claude heavily for the code).
+- Mature React map tooling (`react-map-gl` for MapLibre/Mapbox) — the map is the Tier 1 core
+  feature; React removes the imperative-lifecycle glue pain on the *client* (note: the hard
+  *geospatial backend* work — PostGIS, viewport queries, clustering — is framework-agnostic).
+- Built-in route handlers/server actions can absorb the Stripe webhook + alert-email functions
+  into one repo/deploy.
+- Strong SSG/ISR for the SEO landing page (Section 6).
+- Chosen over **Angular** (owner is personally stronger in Angular, but Claude writes most code,
+  which shrinks that advantage) and over **Remix** (folded into React Router v7 / mid-transition;
+  smaller ecosystem and thinner AI corpus). Nuxt/Vue would give similar benefits if Vue were
+  preferred.
 
-**Suggested stack (from `SPEC.md`):** Supabase/Postgres + Auth, Angular frontend, Python
-ingestion, GitHub Actions cron scheduling, Stripe for the subscription gate.
+**Transition plan (cheap — the frontend is a thin spike):**
+- **Python ingestion/parsers — untouched** (framework-agnostic; they write to Supabase).
+- **Port the thin reusable TypeScript/data** from the Angular viewer to the Next app: OK ArcGIS
+  query params/field lists in `viewer/src/app/app.ts` (`OCC_BASE`, `buildOkWhere`,
+  `loadOkWells`, `loadOkPermits`) and `viewer/src/app/tx-county-codes.ts` (county crosswalk).
+- **Retire the Angular `viewer/`** — keep as a reference spike while building, then remove. It was
+  always going to be rewritten from "raw data viewer" into the real map + dashboard product.
 
-**Housekeeping noted:** delete leftover root-level `package.json`/`package-lock.json`/
-`node_modules` (Angular CLI scaffolding — real deps live in `viewer/`); add
+**Styling / UI framework decision: Tailwind CSS + shadcn/ui.**
+- **shadcn/ui** = accessible components (Radix primitives + Tailwind) **copied into the repo**, not
+  an installed dependency — we own and customize the code. Most AI-reliable option (matters since
+  Claude writes most code), accessible by default, themeable via CSS variables for brand + dark
+  mode.
+- Tailwind styles all the *chrome* around the map (filter panels, popovers, cards, dashboard); the
+  map canvas itself is WebGL via `react-map-gl`.
+- **Not** using Tailwind Plus (owner's call — no paid UI kit); build landing/marketing sections
+  from Tailwind + shadcn directly.
+- Dashboard charts later, if needed: **Recharts** or **Tremor** (both Tailwind-friendly React).
+- Avoid MUI / Chakra / Mantine / Ant Design — they bring competing style systems that clash with
+  Tailwind.
+
+**Stack (updated):** **Next.js (React)** frontend + **Tailwind CSS + shadcn/ui** + Supabase/Postgres
+(PostGIS) + Auth + RLS, **Python** ingestion, GitHub Actions cron scheduling, Stripe subscription
+gate, MapLibre/`react-map-gl` for the map.
+
+**Housekeeping noted:** delete leftover `package.json`/`package-lock.json`/`node_modules`
+(Angular CLI scaffolding) and the Angular `viewer/` once ported; add
 `requirements.txt`/`pyproject.toml` for `ingestion/`.
+
+---
+
+## 5. Tech stack & scalability (decisions + rationale)
+
+### Does Supabase act as a backend? Yes — mostly. No separate general API server needed.
+
+Supabase is a **backend-as-a-service**: real Postgres + an auto-generated REST/GraphQL API over
+your tables + Auth (signup/login, JWT) + **Row-Level Security (RLS)** + Storage (future document
+vault) + Edge Functions (serverless TypeScript). For the standard app (users save tracts, load
+dashboard/map, read activity), the **Next.js app talks to Supabase directly** (browser via the
+client SDK, and server-side via server components / route handlers) and RLS enforces who sees
+what — so we do **not** build or host a traditional API server for CRUD.
+
+Mental model: not `Browser → our API server → DB` (3-tier). Instead
+`Browser → Supabase (DB + auto-API + auth + RLS)`; we only write server code for the few things
+that truly need it.
+
+### We still have server-side code — as *jobs and functions*, not an API tier
+
+Three parts can't live in the browser:
+1. **Ingestion** — OK ArcGIS pulls + TX bulk download/parse (existing Python). Scheduled jobs.
+2. **Stripe** — anything using the Stripe *secret* key (checkout sessions, subscription
+   webhooks) must run server-side. A few serverless functions.
+3. **Matching + alerts + email** — compare new activity vs. ownership, send alert emails, on a
+   schedule.
+
+**Nuance:** Supabase Edge Functions run on Deno (TypeScript), so **Python ingestion won't run
+natively inside Supabase.** Pattern: run Python ingestion as **GitHub Actions cron** (or a cheap
+worker on Fly.io/Railway/Render later) connecting directly to Supabase Postgres with a service
+key. **With Next.js, the Stripe webhook + alert-email functions can live as Next route handlers
+in the same repo/deploy** (instead of separate Supabase Edge Functions) — one fewer moving part.
+
+### The system is (now) three pieces
+1. **Next.js app** (frontend **+** the Stripe/email serverless logic as route handlers)
+2. **Supabase** (managed — DB, auth, CRUD API, RLS, storage)
+3. **Python jobs service** (ingestion + matching, scheduled via GitHub Actions)
+
+### Scalability: comfortable for this product; watch *data*, not user concurrency
+- **Scale is niche** — thousands to tens of thousands of $25/mo users, mostly *reads*. Postgres
+  handles this easily; user concurrency is not the concern.
+- **Geospatial is the one real design concern.** TX alone has 1M+ historical wells; a busy county
+  has thousands of points. **Do not ship all points to the browser.** Use **PostGIS** + spatial
+  indexes + **query-by-viewport with zoom-based clustering / vector tiles.** Map client:
+  **MapLibre GL** (open-source) or Mapbox, not basic Leaflet.
+- **Data growth per added state** — handled with indexing + partition-by-state; fine for years.
+- **Ingestion is batch, off the user path** — scales independently as a background job.
+- **No DB lock-in** — Supabase *is* Postgres; can lift-and-shift to RDS/any Postgres host later.
+  Only Auth + Edge Functions are Supabase-specific, and both are replaceable.
+
+**Bottom line:** the stack is well-matched and scales past where this product is realistically
+going. The hard problems are *data engineering* (ingestion reliability, normalization quality,
+geospatial query performance), solved within this stack — not reasons to change it.
+
+**Security note:** RLS is the security boundary and is easy to misconfigure — it needs deliberate
+setup and testing so a user can never read another user's ownership data.
+
+---
+
+## 6. Landing page
+
+**Goal:** convert visitors → free-trial signups. The map is the hook, so it leads. This is a
+marketing surface, distinct from the logged-in app.
+
+### Page structure (derived from the positioning above)
+1. **Hero** — the map front and center (interactive demo or rich screenshot with activity pins).
+   Owner-language headline, not jargon (e.g. "Know what's happening on your minerals" / "See oil
+   & gas activity on your land — as it happens"). Primary CTA: **Start your free trial**;
+   secondary: **See the map**.
+2. **The problem** — most owners (especially inherited-interest owners) don't know what they own
+   or what's happening near it.
+3. **How it works, 3 steps** — tell us what you own → we track OK & TX activity → see it on your
+   map. (Tier 2 teaser: "and we'll alert you when something changes.")
+4. **Map showcase (Tier 1 value)** — the personalized "your acreage + nearby activity" view.
+5. **"We watch it for you" (Tier 2 upsell)** — alerts + monitoring; the retention pitch.
+6. **Plain-English explanations** — the educational angle; big trust-builder for non-experts.
+7. **Pricing** — free trial → **$25/mo Tier 1**, higher Tier 2. Keep it dead simple.
+8. **Who it's for / credibility** — inherited owners, investors, landmen; lean on the partner's
+   industry expertise.
+9. **Soft consulting cross-link** — "Need expert help reading an offer? Talk to a consultant"
+   (the separate consulting business, gently).
+10. **FAQ + footer CTA** — data is public/state-sourced; coverage is OK+TX (more coming); your
+    ownership info is private (self-reported, protected by RLS).
+
+### Where it lives (technical)
+A marketing page must be **fast and SEO-indexable** (organic search like "oil gas activity my
+county"). Next.js handles this natively, so:
+- **Static/ISR route in the Next app (recommended to start)** — the landing page is a
+  statically-generated (SSG) or ISR public route in the same Next codebase; the app sits behind
+  login (e.g. `/app` or an authed route group). One codebase, one deploy, excellent SEO.
+- **Separate static marketing site** (Astro / plain HTML+Tailwind) at the apex domain, app at
+  `app.<domain>`. More marketing-iteration flexibility; slightly more to manage.
+
+Start with the SSG/ISR route in the Next app; split out only if marketing iteration demands it.
+
+### Assets on hand
+`logo-final.png` / `logo-light.png` (dark/light logo variants) live at the container level above
+`mineral-app/`; land/activity photos in `Images/` could seed hero/section imagery.
