@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 ingestion/.venv/
+.pytest_cache/
 
 # Secrets (ingestion job DB connection string, etc.)
 ingestion/.env

@@ -82,6 +82,16 @@ python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt   # first t
 ./.venv/bin/python ok_hf_laterals.py               # full load + normalize into activity
 ```
 
+**Run the ingestion tests** (pure transform logic — no network or DB)
+```bash
+cd ingestion
+./.venv/bin/pip install -r requirements-dev.txt    # first time (adds pytest)
+./.venv/bin/python -m pytest
+```
+Every new state adapter should get transform-level unit tests in `ingestion/tests/`
+(see `test_ok_hf_laterals.py` for the pattern). This is where data bugs live and where
+they're cheapest to catch.
+
 ## Current status (as of last session)
 
 **Working end-to-end:**

@@ -1,0 +1,3 @@
+# Test/dev dependencies for the ingestion jobs.
+-r requirements.txt
+pytest>=8
