@@ -11,12 +11,18 @@ export type ActivityLevel = "active" | "quiet";
 
 export interface Tract {
   id: string;
-  label: string;
+  /** User-given nickname. Optional — falls back to a computed label (see getTractDisplayLabel). */
+  label?: string;
   state: string; // "OK"
   county: string;
   approxAcres: number;
   interestType: InterestType;
   operator?: string;
+}
+
+/** "Home Place" if the user set one, otherwise a computed fallback like "Garvin County Tract". */
+export function getTractDisplayLabel(tract: Pick<Tract, "label" | "county">): string {
+  return tract.label?.trim() || `${tract.county} County Tract`;
 }
 
 export interface ActivityEvent {
@@ -36,10 +42,11 @@ export interface ActivityEvent {
 }
 
 const TRACTS: Tract[] = [
-  { id: "t1", label: "Garvin — Home Place", state: "OK", county: "Garvin", approxAcres: 80, interestType: "mineral", operator: "Continental Resources" },
-  { id: "t2", label: "Kingfisher — North 160", state: "OK", county: "Kingfisher", approxAcres: 160, interestType: "mineral" },
-  { id: "t3", label: "Canadian — Grandma's", state: "OK", county: "Canadian", approxAcres: 40, interestType: "royalty" },
-  { id: "t4", label: "Carter — Inherited", state: "OK", county: "Carter", approxAcres: 120, interestType: "mineral" },
+  { id: "t1", label: "Home Place", state: "OK", county: "Garvin", approxAcres: 80, interestType: "mineral", operator: "Continental Resources" },
+  { id: "t2", label: "North 160", state: "OK", county: "Kingfisher", approxAcres: 160, interestType: "mineral" },
+  { id: "t3", label: "Grandma's", state: "OK", county: "Canadian", approxAcres: 40, interestType: "royalty" },
+  // No label set — demonstrates the computed fallback (getTractDisplayLabel).
+  { id: "t4", state: "OK", county: "Carter", approxAcres: 120, interestType: "mineral" },
 ];
 
 const ACTIVITY: ActivityEvent[] = [
@@ -76,6 +83,7 @@ const ACTIVITY: ActivityEvent[] = [
 // ---- Accessors (swap these for Supabase queries when wiring real data) ---- //
 
 export interface TractSummary extends Tract {
+  displayLabel: string;
   level: ActivityLevel;
   newActivityCount: number;
   latest?: ActivityEvent;
@@ -86,6 +94,7 @@ export function getTractSummaries(): TractSummary[] {
     const events = ACTIVITY.filter((a) => a.tractId === t.id).sort((a, b) => a.daysAgo - b.daysAgo);
     return {
       ...t,
+      displayLabel: getTractDisplayLabel(t),
       level: events.length > 0 ? "active" : "quiet",
       newActivityCount: events.length,
       latest: events[0],

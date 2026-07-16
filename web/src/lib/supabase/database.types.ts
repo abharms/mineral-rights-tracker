@@ -119,6 +119,7 @@ export type Database = {
           created_at: string
           id: string
           interest_type: Database["public"]["Enums"]["interest_type"]
+          label: string | null
           legal_description: string | null
           notes: string | null
           operator: string | null
@@ -133,6 +134,7 @@ export type Database = {
           created_at?: string
           id?: string
           interest_type?: Database["public"]["Enums"]["interest_type"]
+          label?: string | null
           legal_description?: string | null
           notes?: string | null
           operator?: string | null
@@ -147,6 +149,7 @@ export type Database = {
           created_at?: string
           id?: string
           interest_type?: Database["public"]["Enums"]["interest_type"]
+          label?: string | null
           legal_description?: string | null
           notes?: string | null
           operator?: string | null

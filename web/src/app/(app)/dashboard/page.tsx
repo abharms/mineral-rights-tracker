@@ -57,7 +57,7 @@ export default function DashboardPage() {
                 <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
                   <div>
                     <div className="font-heading text-base font-semibold text-foreground">
-                      {tract.label}
+                      {tract.displayLabel}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {tract.county} County, {tract.state} · {tract.approxAcres} acres
