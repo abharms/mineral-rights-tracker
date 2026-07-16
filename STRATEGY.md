@@ -50,6 +50,13 @@ instantly understandable to a customer.
 paywalled up — personalizing the map is most of its wow and is cheap to include. Tier 2 is
 specifically the automation/monitoring/decision layer that runs *without the user logging in*.
 
+**Monitoring granularity — decided:** Tier 2 monitoring is **account-wide, not per-tract**. A
+user's whole account is either watched (Guardian) or not (Explorer) — no mixed per-tract state.
+This matches the real schema (`profiles.tier`, one row per account) rather than needing a
+per-tract flag on `ownership_tracts`. (A UI mockup briefly implied per-tract monitoring; caught in
+review and corrected — see the dashboard, which now shows plan/monitoring status once, at the
+account level, not on every tract card.)
+
 **Build sequencing this unlocks:** ship **Tier 1 (map + data + personal tracts) first** — fastest
 path to revenue, validates the partner's $25 bet with real customers — then add **Tier 2
 (monitoring/Plan B)** as the paid expansion. Map-first and Plan B become phase 1 and phase 2, not

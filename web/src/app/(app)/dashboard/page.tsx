@@ -16,7 +16,6 @@ import {
   Search,
   List,
   Upload,
-  ShieldCheck,
   Lock,
   ArrowRight,
 } from "lucide-react";
@@ -157,18 +156,6 @@ export default function DashboardPage() {
                         </Link>
                       </>
                     )}
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 text-center sm:w-28 sm:shrink-0">
-                    <span className="flex size-9 items-center justify-center rounded-full bg-emerald-50">
-                      <ShieldCheck className="size-4 text-emerald-600" />
-                    </span>
-                    <div className="text-xs">
-                      <div className="font-medium text-foreground">{plan.name}</div>
-                      <div className="text-muted-foreground">
-                        {tract.monitored ? "Monitored" : "Not monitored"}
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

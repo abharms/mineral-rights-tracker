@@ -18,14 +18,6 @@ export interface Tract {
   approxAcres: number;
   interestType: InterestType;
   operator?: string;
-  /**
-   * Mock-only field for the Explorer/Guardian tier UI. Modeled per-tract here
-   * because that's a superset of "account-wide" (all tracts get the same
-   * value) — collapse to account-wide later if we decide monitoring isn't
-   * sold per-tract. This is NOT wired to a real column yet; it's a UI
-   * placeholder until that pricing-granularity decision is made.
-   */
-  monitored?: boolean;
 }
 
 /** "Home Place" if the user set one, otherwise a computed fallback like "Garvin County Tract". */
