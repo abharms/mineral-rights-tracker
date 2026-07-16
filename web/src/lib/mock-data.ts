@@ -33,6 +33,15 @@ export function getTractDisplayLabel(tract: Pick<Tract, "label" | "county">): st
   return tract.label?.trim() || `${tract.county} County Tract`;
 }
 
+/** "2026-07-08" -> "July 8, 2026" */
+export function formatEventDate(iso: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export interface ActivityEvent {
   id: string;
   tractId: string;
@@ -52,9 +61,10 @@ export interface ActivityEvent {
 const TRACTS: Tract[] = [
   { id: "t1", label: "Home Place", state: "OK", county: "Garvin", approxAcres: 80, interestType: "mineral", operator: "Continental Resources" },
   { id: "t2", label: "North 160", state: "OK", county: "Kingfisher", approxAcres: 160, interestType: "mineral" },
-  { id: "t3", label: "Grandma's", state: "OK", county: "Canadian", approxAcres: 40, interestType: "royalty" },
+  // Multi-state on purpose — exercises the TX/NM state-outline icons, not just OK.
+  { id: "t3", label: "Grandma's", state: "TX", county: "Reeves", approxAcres: 40, interestType: "royalty" },
   // No label set — demonstrates the computed fallback (getTractDisplayLabel).
-  { id: "t4", state: "OK", county: "Carter", approxAcres: 120, interestType: "mineral" },
+  { id: "t4", state: "NM", county: "Lea", approxAcres: 120, interestType: "mineral" },
 ];
 
 const ACTIVITY: ActivityEvent[] = [
@@ -81,8 +91,8 @@ const ACTIVITY: ActivityEvent[] = [
   },
   {
     id: "a4", tractId: "t4", recordType: "permit", wellType: "horizontal",
-    title: "REDBUD 3-8-4S", operator: "Marathon Oil", county: "Carter",
-    apiNumber: "35-019-41220", status: "Permit filed", eventDate: "2026-06-24", daysAgo: 22,
+    title: "REDBUD 3-8-4S", operator: "Marathon Oil", county: "Lea",
+    apiNumber: "30-025-41220", status: "Permit filed", eventDate: "2026-06-24", daysAgo: 22,
     explanation:
       "A new permit from a different operator in your county. Worth noting even if it isn't adjacent — it reflects where drilling attention is moving.",
   },
@@ -118,8 +128,14 @@ export function getDashboardStats() {
   return { tracts, acres, newActivity, activeCounties };
 }
 
-export function getRecentActivity(): ActivityEvent[] {
-  return [...ACTIVITY].sort((a, b) => a.daysAgo - b.daysAgo);
+export interface ActivityEventWithState extends ActivityEvent {
+  state: string;
+}
+
+export function getRecentActivity(): ActivityEventWithState[] {
+  return [...ACTIVITY]
+    .sort((a, b) => a.daysAgo - b.daysAgo)
+    .map((a) => ({ ...a, state: TRACTS.find((t) => t.id === a.tractId)?.state ?? "" }));
 }
 
 export function getActivityById(id: string): ActivityEvent | undefined {

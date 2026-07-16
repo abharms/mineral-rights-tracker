@@ -2,11 +2,13 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { StateOutline } from "@/components/state-outline";
 import {
   getTractSummaries,
   getDashboardStats,
   getRecentActivity,
   getUserPlan,
+  formatEventDate,
   GUARDIAN_FEATURES,
 } from "@/lib/mock-data";
 import {
@@ -17,7 +19,6 @@ import {
   ShieldCheck,
   Lock,
   ArrowRight,
-  MapPin,
 } from "lucide-react";
 
 function formatDaysAgo(days: number) {
@@ -27,24 +28,19 @@ function formatDaysAgo(days: number) {
 }
 
 // Decorative per-tract accent color (cycled by index) — purely visual variety,
-// not tied to status or real parcel geometry. See design/dashboard-brief.md:
-// we deliberately avoid implying precise boundaries we don't have.
+// tied to the tract's real `state` field for the icon, not to status or any
+// parcel-level geometry we don't have. See design/dashboard-brief.md.
 const TRACT_ACCENTS = [
-  { fg: "text-orange-600", bg: "bg-orange-50", ring: "ring-orange-200" },
-  { fg: "text-emerald-600", bg: "bg-emerald-50", ring: "ring-emerald-200" },
-  { fg: "text-violet-600", bg: "bg-violet-50", ring: "ring-violet-200" },
-  { fg: "text-blue-600", bg: "bg-blue-50", ring: "ring-blue-200" },
+  { fg: "text-orange-600", bg: "bg-orange-50" },
+  { fg: "text-emerald-600", bg: "bg-emerald-50" },
+  { fg: "text-violet-600", bg: "bg-violet-50" },
+  { fg: "text-blue-600", bg: "bg-blue-50" },
 ];
 
-function StatusIndicator({ active, label }: { active: boolean; label: string }) {
+function StatusDot({ active, label }: { active: boolean; label: string }) {
   return (
-    <span
-      className={
-        "inline-flex items-center gap-1.5 text-sm font-medium " +
-        (active ? "text-brand" : "text-muted-foreground")
-      }
-    >
-      <span className={"size-1.5 rounded-full " + (active ? "bg-brand" : "bg-muted-foreground/50")} />
+    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+      <span className={"size-2 rounded-full " + (active ? "bg-brand" : "bg-muted-foreground/40")} />
       {label}
     </span>
   );
@@ -97,10 +93,8 @@ export default function DashboardPage() {
               <Card key={tract.id} className="overflow-hidden border-border py-0 shadow-sm">
                 <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
                   <div className="flex min-w-0 items-center gap-3 sm:w-60 sm:shrink-0">
-                    <span
-                      className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${accent.bg} ring-1 ${accent.ring}`}
-                    >
-                      <MapPin className={`size-5 ${accent.fg}`} />
+                    <span className={`flex size-14 shrink-0 items-center justify-center rounded-lg ${accent.bg} p-2`}>
+                      <StateOutline state={tract.state} className={`size-full ${accent.fg}`} />
                     </span>
                     <div className="min-w-0">
                       <div className="font-heading text-base font-semibold text-foreground">
@@ -114,44 +108,60 @@ export default function DashboardPage() {
 
                   <div className="flex gap-6 text-sm sm:w-64 sm:shrink-0">
                     <div>
-                      <div className="text-foreground">{tract.approxAcres.toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">Acres</div>
+                      <div className="font-medium text-foreground">
+                        {tract.approxAcres.toLocaleString()}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-foreground capitalize">
+                      <div className="text-xs text-muted-foreground">Interest</div>
+                      <div className="font-medium text-foreground capitalize">
                         {tract.interestType === "npri" ? "NPRI" : tract.interestType}
                       </div>
-                      <div className="text-xs text-muted-foreground">Interest</div>
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-foreground">{tract.operator ?? "—"}</div>
                       <div className="text-xs text-muted-foreground">Operator</div>
+                      <div className="truncate font-medium text-foreground">
+                        {tract.operator ?? "—"}
+                      </div>
                     </div>
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <StatusIndicator
-                      active={tract.level === "active"}
-                      label={tract.level === "active" ? "Recent activity" : "Quiet"}
-                    />
                     {tract.level === "active" && tract.latest ? (
-                      <div className="mt-1 text-sm">
-                        <span className="font-medium text-foreground">{tract.latest.status}</span>
-                        <span className="text-muted-foreground">
-                          {" "}
-                          · {formatDaysAgo(tract.latest.daysAgo)}
-                        </span>
-                      </div>
+                      <>
+                        <StatusDot active label="Recent activity" />
+                        <div className="mt-1 font-medium text-foreground">
+                          {tract.latest.status}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatEventDate(tract.latest.eventDate)}
+                        </div>
+                        <Link
+                          href={`/activity/${tract.latest.id}`}
+                          className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                        >
+                          View details <ArrowRight className="size-3.5" />
+                        </Link>
+                      </>
                     ) : (
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        No new activity in the last 30 days.
-                      </div>
+                      <>
+                        <StatusDot active={false} label="No recent activity" />
+                        <div className="mt-1 font-medium text-foreground">Quiet</div>
+                        <div className="text-sm text-muted-foreground">In the last 30 days</div>
+                        <Link
+                          href="/dashboard"
+                          className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                        >
+                          View details <ArrowRight className="size-3.5" />
+                        </Link>
+                      </>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 sm:w-40 sm:shrink-0 sm:justify-end">
-                    <span className="flex size-7 items-center justify-center rounded-full bg-muted">
-                      <ShieldCheck className="size-3.5 text-muted-foreground" />
+                  <div className="flex flex-col items-center gap-1 text-center sm:w-28 sm:shrink-0">
+                    <span className="flex size-9 items-center justify-center rounded-full bg-emerald-50">
+                      <ShieldCheck className="size-4 text-emerald-600" />
                     </span>
                     <div className="text-xs">
                       <div className="font-medium text-foreground">{plan.name}</div>
@@ -210,7 +220,7 @@ export default function DashboardPage() {
                       </Link>
                     </td>
                     <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
-                      {event.county}, {"OK"}
+                      {event.county}, {event.state}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                       {formatDaysAgo(event.daysAgo)}
