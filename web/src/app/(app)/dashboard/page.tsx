@@ -1,12 +1,23 @@
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   getTractSummaries,
   getDashboardStats,
   getRecentActivity,
+  getUserPlan,
+  GUARDIAN_FEATURES,
 } from "@/lib/mock-data";
+import {
+  Map as MapIcon,
+  Search,
+  List,
+  Upload,
+  ShieldCheck,
+  Lock,
+  ArrowRight,
+} from "lucide-react";
 
 function formatDaysAgo(days: number) {
   if (days === 0) return "Today";
@@ -14,11 +25,12 @@ function formatDaysAgo(days: number) {
   return `${days} days ago`;
 }
 
-function StatTile({ label, value }: { label: string; value: string | number }) {
+function StatTile({ label, value, sublabel }: { label: string; value: string | number; sublabel?: string }) {
   return (
     <div className="rounded-xl border border-border bg-card px-5 py-4">
       <div className="font-heading text-2xl font-semibold text-foreground">{value}</div>
       <div className="mt-0.5 text-sm text-muted-foreground">{label}</div>
+      {sublabel && <div className="text-xs text-muted-foreground/70">{sublabel}</div>}
     </div>
   );
 }
@@ -27,93 +39,270 @@ export default function DashboardPage() {
   const tracts = getTractSummaries();
   const stats = getDashboardStats();
   const recent = getRecentActivity();
+  const plan = getUserPlan();
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex flex-col gap-1">
         <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground">
-          My Mineral Interests
+          Good morning, James
         </h1>
         <p className="text-muted-foreground">
-          Here&apos;s what&apos;s happening on and near your land.
+          Here&apos;s what&apos;s happening with your mineral interests.
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Tracts tracked" value={stats.tracts} />
-        <StatTile label="Total acres" value={stats.acres.toLocaleString()} />
-        <StatTile label="New activity" value={stats.newActivity} />
-        <StatTile label="Active counties" value={stats.activeCounties} />
-      </div>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
+        {/* Main column */}
+        <div className="min-w-0">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <h2 className="font-heading text-xl font-semibold text-foreground">My Tracts</h2>
+              <p className="text-sm text-muted-foreground">Your mineral interests at a glance.</p>
+            </div>
+            <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline">
+              View all tracts →
+            </Link>
+          </div>
 
-      <Separator className="my-8" />
-
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <h2 className="font-heading text-xl font-semibold text-foreground">Your tracts</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 flex flex-col gap-3">
             {tracts.map((tract) => (
-              <Card key={tract.id} className="overflow-hidden">
-                <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
-                  <div>
+              <Card key={tract.id} className="overflow-hidden py-0">
+                <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0 sm:w-56 sm:shrink-0">
                     <div className="font-heading text-base font-semibold text-foreground">
                       {tract.displayLabel}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {tract.county} County, {tract.state} · {tract.approxAcres} acres
+                      {tract.county} County, {tract.state}
                     </div>
                   </div>
-                  {tract.level === "active" ? (
-                    <Badge className="bg-brand text-brand-foreground hover:bg-brand">
-                      {tract.newActivityCount} new
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Quiet</Badge>
-                  )}
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {tract.latest ? (
-                    <Link
-                      href={`/activity/${tract.latest.id}`}
-                      className="block rounded-lg bg-muted/60 px-3 py-2.5 text-sm transition-colors hover:bg-muted"
-                    >
-                      <div className="font-medium text-foreground">{tract.latest.status}</div>
-                      <div className="text-muted-foreground">
-                        {tract.latest.operator} · {formatDaysAgo(tract.latest.daysAgo)}
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="rounded-lg bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
-                      No recent drilling activity nearby.
+
+                  <div className="flex gap-6 text-sm sm:w-52 sm:shrink-0">
+                    <div>
+                      <div className="text-foreground">{tract.approxAcres.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">Acres</div>
                     </div>
-                  )}
+                    <div className="capitalize">
+                      <div className="text-foreground">
+                        {tract.interestType === "npri" ? "NPRI" : tract.interestType}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Interest</div>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    {tract.level === "active" ? (
+                      <>
+                        <Badge className="bg-brand text-brand-foreground hover:bg-brand">
+                          Recent activity
+                        </Badge>
+                        {tract.latest && (
+                          <div className="mt-1.5 text-sm">
+                            <span className="font-medium text-foreground">
+                              {tract.latest.status}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {" "}
+                              · {formatDaysAgo(tract.latest.daysAgo)}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="secondary">Quiet</Badge>
+                        <div className="mt-1.5 text-sm text-muted-foreground">
+                          No new activity in the last 30 days.
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 sm:w-40 sm:shrink-0 sm:justify-end">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-muted">
+                      <ShieldCheck className="size-3.5 text-muted-foreground" />
+                    </span>
+                    <div className="text-xs">
+                      <div className="font-medium text-foreground">{plan.name}</div>
+                      <div className="text-muted-foreground">
+                        {tract.monitored ? "Monitored" : "Not monitored"}
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </div>
 
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-foreground">Recent activity</h2>
-          <div className="mt-4 flex flex-col gap-3">
-            {recent.map((event) => (
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile label="Tracts" sublabel="You're tracking" value={stats.tracts} />
+            <StatTile label="Total acres" sublabel="Approximate" value={stats.acres.toLocaleString()} />
+            <StatTile label="Counties" sublabel="With activity" value={stats.activeCounties} />
+            <StatTile label="Records found" sublabel="In last 30 days" value={stats.newActivity} />
+          </div>
+
+          <Separator className="my-8" />
+
+          <div className="flex items-baseline justify-between">
+            <div>
+              <h2 className="font-heading text-xl font-semibold text-foreground">
+                Recent activity
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                The latest updates across your tracts.
+              </p>
+            </div>
+            <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline">
+              View all activity →
+            </Link>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Activity</th>
+                  <th className="hidden px-4 py-2 font-medium sm:table-cell">County</th>
+                  <th className="px-4 py-2 font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {recent.map((event) => (
+                  <tr key={event.id} className="transition-colors hover:bg-accent">
+                    <td className="px-4 py-3">
+                      <Link href={`/activity/${event.id}`} className="block">
+                        <div className="font-medium text-foreground">{event.status}</div>
+                        <div className="text-muted-foreground">
+                          {event.title} · {event.operator}
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                      {event.county}, {"OK"}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                      {formatDaysAgo(event.daysAgo)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-8 rounded-xl border border-border bg-card p-6">
+            <h3 className="font-heading text-lg font-semibold text-foreground">
+              Explore activity your way
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Search public records or explore activity on the map.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link
-                key={event.id}
-                href={`/activity/${event.id}`}
-                className="rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-brand/40 hover:bg-accent"
+                href="/dashboard"
+                className="flex flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3 transition-colors hover:border-primary/40 hover:bg-accent"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-foreground">{event.status}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDaysAgo(event.daysAgo)}
-                  </span>
-                </div>
-                <div className="mt-0.5 text-sm text-muted-foreground">
-                  {event.title} · {event.operator}
+                <Search className="size-4 text-primary" />
+                <div>
+                  <div className="text-sm font-medium text-foreground">Search activity</div>
+                  <div className="text-xs text-muted-foreground">Find permits, wells, and more.</div>
                 </div>
               </Link>
-            ))}
+              <Link
+                href="/map"
+                className="flex flex-1 items-center gap-3 rounded-lg border border-border px-4 py-3 transition-colors hover:border-primary/40 hover:bg-accent"
+              >
+                <MapIcon className="size-4 text-primary" />
+                <div>
+                  <div className="text-sm font-medium text-foreground">Explore map</div>
+                  <div className="text-xs text-muted-foreground">
+                    See activity on the map around your tracts.
+                  </div>
+                </div>
+              </Link>
+            </div>
           </div>
+        </div>
+
+        {/* Right rail */}
+        <div className="flex flex-col gap-4">
+          <Card className="border-border">
+            <CardContent className="p-5">
+              <Badge variant="secondary" className="text-[10px] font-semibold tracking-wide uppercase">
+                Your plan
+              </Badge>
+              <div className="mt-2 font-heading text-lg font-semibold text-foreground">
+                {plan.name} Plan
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
+
+              <Separator className="my-4" />
+
+              <div className="text-sm font-medium text-foreground">Upgrade to Guardian</div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We&apos;ll automatically monitor your tracts and alert you to important activity.
+              </p>
+              <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                <Lock className="size-3.5" />
+                Upgrade to Guardian
+              </button>
+              <Link
+                href="/dashboard"
+                className="mt-2 block text-center text-sm font-medium text-primary hover:underline"
+              >
+                Learn more about Guardian
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardContent className="p-5">
+              <div className="font-heading text-base font-semibold text-foreground">
+                Quick actions
+              </div>
+              <div className="mt-3 flex flex-col">
+                {[
+                  { icon: Search, label: "Search activity", href: "/dashboard" },
+                  { icon: MapIcon, label: "Explore on map", href: "/map" },
+                  { icon: List, label: "View my tracts", href: "/dashboard" },
+                  { icon: Upload, label: "Upload a document", href: "/dashboard" },
+                ].map((action) => (
+                  <Link
+                    key={action.label}
+                    href={action.href}
+                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent"
+                  >
+                    <span className="flex items-center gap-2.5 text-foreground">
+                      <action.icon className="size-4 text-muted-foreground" />
+                      {action.label}
+                    </span>
+                    <ArrowRight className="size-3.5 text-muted-foreground" />
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardContent className="p-5">
+              <div className="font-heading text-base font-semibold text-foreground">
+                Guardian includes
+              </div>
+              <div className="mt-3 flex flex-col gap-3">
+                {GUARDIAN_FEATURES.map((f) => (
+                  <div key={f.title} className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{f.title}</div>
+                      <div className="text-sm text-muted-foreground">{f.description}</div>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      Premium
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

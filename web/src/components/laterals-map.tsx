@@ -112,7 +112,7 @@ export function LateralsMap() {
   }, []);
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] w-full">
+    <div className="relative h-full w-full">
       <Map
         ref={mapRef}
         initialViewState={{ longitude: -97.8, latitude: 35.6, zoom: 6.2 }}

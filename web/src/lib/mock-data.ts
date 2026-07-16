@@ -18,6 +18,14 @@ export interface Tract {
   approxAcres: number;
   interestType: InterestType;
   operator?: string;
+  /**
+   * Mock-only field for the Explorer/Guardian tier UI. Modeled per-tract here
+   * because that's a superset of "account-wide" (all tracts get the same
+   * value) — collapse to account-wide later if we decide monitoring isn't
+   * sold per-tract. This is NOT wired to a real column yet; it's a UI
+   * placeholder until that pricing-granularity decision is made.
+   */
+  monitored?: boolean;
 }
 
 /** "Home Place" if the user set one, otherwise a computed fallback like "Garvin County Tract". */
@@ -121,3 +129,32 @@ export function getActivityById(id: string): ActivityEvent | undefined {
 export function getTracts(): Tract[] {
   return TRACTS;
 }
+
+// ---- Plan / tier (mock — see STRATEGY.md pricing model: Tier 1 "you look it
+// up" / Tier 2 "we watch it for you"). Display names below ("Explorer" /
+// "Guardian") are working names from a design mockup, not finalized product
+// copy — cheap to rename later. ---- //
+
+export interface UserPlan {
+  name: "Explorer" | "Guardian";
+  tagline: string;
+}
+
+export function getUserPlan(): UserPlan {
+  return { name: "Explorer", tagline: "Search public records and maps anytime." };
+}
+
+export const GUARDIAN_FEATURES = [
+  {
+    title: "Automatic monitoring",
+    description: "We track permits, wells, and activity for you.",
+  },
+  {
+    title: "Instant alerts",
+    description: "Get notified the moment something happens.",
+  },
+  {
+    title: "Summary reports",
+    description: "Receive easy-to-read updates and insights.",
+  },
+] as const;
