@@ -44,7 +44,7 @@ export type Database = {
           api_number: string | null
           bhl_latitude: number | null
           bhl_longitude: number | null
-          county: string
+          county: string | null
           county_fips: string | null
           created_at: string
           event_date: string | null
@@ -67,7 +67,7 @@ export type Database = {
           api_number?: string | null
           bhl_latitude?: number | null
           bhl_longitude?: number | null
-          county: string
+          county?: string | null
           county_fips?: string | null
           created_at?: string
           event_date?: string | null
@@ -90,7 +90,7 @@ export type Database = {
           api_number?: string | null
           bhl_latitude?: number | null
           bhl_longitude?: number | null
-          county?: string
+          county?: string | null
           county_fips?: string | null
           created_at?: string
           event_date?: string | null

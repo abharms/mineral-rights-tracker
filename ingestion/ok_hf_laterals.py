@@ -187,7 +187,7 @@ insert into public.raw_ok_laterals (
   %(shl_latitude)s, %(shl_longitude)s, %(bhl_latitude)s, %(bhl_longitude)s, %(source_datum)s,
   %(section)s, %(township)s, %(rng)s, %(meridian)s, %(service_company)s,
   %(submitted_date)s, %(start_date)s, %(end_date)s, %(flow_date)s, %(formation)s, %(stages)s,
-  case when %(path_wkt)s is null then null else st_geogfromtext(%(path_wkt)s) end,
+  case when %(path_wkt)s::text is null then null else st_geogfromtext(%(path_wkt)s::text) end,
   %(raw)s
 )
 """
